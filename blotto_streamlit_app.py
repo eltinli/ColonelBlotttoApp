@@ -1,81 +1,88 @@
 import streamlit as st
 import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
+import os
 
-# Initialize session state for storing submissions
-if 'submissions' not in st.session_state:
-    st.session_state.submissions = []
+st.set_page_config(page_title="Colonel Blotto Game", page_icon="🪖")
 
-st.set_page_config(page_title="Colonel Blotto", layout="centered")
-st.title("🪖 Colonel Blotto Game: 3 Bases, 30 Troops")
+st.title("🎖️ Colonel Blotto Game")
+st.markdown("Allocate exactly **30 troops** across **3 bases**. Highest troop wins a base.")
 
-st.markdown("""
-Welcome, Commander! You have **30 troops** to allocate across **3 battlefields**.
-Your goal: Win more battlefields than your opponents. Choose wisely! 🧠⚔️
-""")
+# --- Submission Handling Setup ---
+data_file = "submissions.csv"
 
-name = st.text_input("🎖️ Enter your name or alias:")
+# Initialize submissions file if not present
+if not os.path.exists(data_file):
+    pd.DataFrame(columns=["Name", "Base1", "Base2", "Base3"]).to_csv(data_file, index=False)
 
-st.markdown("### 📦 Allocate your troops below")
-alloc = [0, 0, 0]
-cols = st.columns(3)
-for i in range(3):
-    with cols[i]:
-        st.markdown(f"#### 🏰 Base {i+1}")
-        alloc[i] = st.slider("", min_value=0, max_value=30, step=1, key=f"base_{i+1}")
+# --- Player Input ---
+name = st.text_input("Enter your name or alias")
 
-# Total check
-total = sum(alloc)
-st.metric("Total Troops Allocated", total, delta=total - 30)
+st.subheader("🔢 Troop Allocation")
 
-if st.button("🚀 Submit Strategy"):
-    if total != 30:
-        st.error("❌ Total troops must equal 30.")
-    elif name.strip() == "":
-        st.error("❌ Please enter your name.")
-    else:
-        st.session_state.submissions.append({'name': name, 'allocation': alloc})
-        st.success("✅ Strategy submitted!")
-        # Show chart
-        st.markdown("#### 📊 Your Allocation")
-        fig, ax = plt.subplots()
-        ax.bar([f"Base {i+1}" for i in range(3)], alloc, color="skyblue")
-        ax.set_ylabel("Troops")
-        ax.set_ylim(0, max(alloc) + 5)
-        st.pyplot(fig)
+b1 = st.number_input("Base 1", min_value=0, max_value=30, step=1, value=10, key="base1")
+b2 = st.number_input("Base 2", min_value=0, max_value=30, step=1, value=10, key="base2")
+b3 = st.number_input("Base 3", min_value=0, max_value=30, step=1, value=10, key="base3")
 
-# Show all submissions
-if st.checkbox("📋 Show all submissions"):
-    df = pd.DataFrame(st.session_state.submissions)
-    st.dataframe(df)
+total = b1 + b2 + b3
+st.markdown(f"**Total Allocated:** {total}/30")
 
-# Matchup simulator
-st.markdown("---")
-st.header("⚔️ Simulate Head-to-Head Matchups")
+# Submit button
+if total != 30:
+    st.warning("⚠️ Total must be exactly 30.")
+else:
+    if st.button("✅ Submit Allocation"):
+        if name.strip() == "":
+            st.error("Please enter a name before submitting.")
+        else:
+            new_row = pd.DataFrame([[name.strip(), b1, b2, b3]], columns=["Name", "Base1", "Base2", "Base3"])
+            old_data = pd.read_csv(data_file)
+            updated_data = pd.concat([old_data, new_row], ignore_index=True)
+            updated_data.to_csv(data_file, index=False)
 
-def simulate_match(a, b):
-    wins_a = sum([1 for i in range(3) if a[i] > b[i]])
-    wins_b = sum([1 for i in range(3) if a[i] < b[i]])
-    if wins_a > wins_b:
-        return "A"
-    elif wins_b > wins_a:
-        return "B"
-    else:
-        return "Draw"
+            st.success("🎯 Strategy submitted successfully!")
+            st.bar_chart([b1, b2, b3])
 
-if st.button("🏁 Run All Matchups") and len(st.session_state.submissions) > 1:
-    st.subheader("📈 Results")
+# --- Admin Controls ---
+st.divider()
+st.subheader("🔐 Admin Login")
+admin_pass = st.text_input("Enter admin password to unlock controls", type="password")
+
+if admin_pass == "aim2025":  # Change this to your real password
+    st.success("🔓 Admin access granted")
+
+    submissions = pd.read_csv(data_file)
+    st.markdown("### 🗂️ All Submissions")
+    st.dataframe(submissions)
+
+    st.markdown("### ⚔️ Run All Matchups")
+
+    def run_matchup(row1, row2):
+        wins1 = wins2 = 0
+        for i in range(1, 4):
+            if row1[f"Base{i}"] > row2[f"Base{i}"]:
+                wins1 += 1
+            elif row1[f"Base{i}"] < row2[f"Base{i}"]:
+                wins2 += 1
+        if wins1 > wins2:
+            return row1["Name"]
+        elif wins2 > wins1:
+            return row2["Name"]
+        else:
+            return "Draw"
+
     results = []
-    subs = st.session_state.submissions
-    for i in range(len(subs)):
-        for j in range(i+1, len(subs)):
-            p1 = subs[i]
-            p2 = subs[j]
-            outcome = simulate_match(p1['allocation'], p2['allocation'])
-            winner = p1['name'] if outcome == "A" else p2['name'] if outcome == "B" else "Draw"
-            results.append({
-                'Matchup': f"{p1['name']} vs {p2['name']}",
-                'Winner': winner
-            })
-    st.dataframe(pd.DataFrame(results))
+    for i in range(len(submissions)):
+        for j in range(i + 1, len(submissions)):
+            p1 = submissions.iloc[i]
+            p2 = submissions.iloc[j]
+            result = run_matchup(p1, p2)
+            results.append(f"{p1['Name']} vs {p2['Name']} ➜ Winner: {result}")
+
+    if results:
+        st.markdown("#### Matchup Results")
+        for r in results:
+            st.write(r)
+    else:
+        st.info("Not enough submissions to run matchups.")
+else:
+    st.info("Admin features hidden. Enter password to access.")
