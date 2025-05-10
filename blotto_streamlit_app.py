@@ -59,34 +59,66 @@ if admin_pass == "aim2025":  # Change this to your real password
     st.markdown("### 🗂️ All Submissions")
     st.dataframe(submissions)
 
-    st.markdown("### ⚔️ Run All Matchups")
+    st.markdown("### ⚔️ Round-Robin Matchups")
 
     def run_matchup(row1, row2):
         wins1 = wins2 = 0
+        results = []
+
         for i in range(1, 4):
-            if row1[f"Base{i}"] > row2[f"Base{i}"]:
+            base1 = row1[f"Base{i}"]
+            base2 = row2[f"Base{i}"]
+            if base1 > base2:
+                results.append("1")
                 wins1 += 1
-            elif row1[f"Base{i}"] < row2[f"Base{i}"]:
+            elif base2 > base1:
+                results.append("2")
                 wins2 += 1
+            else:
+                results.append("D")
+
         if wins1 > wins2:
-            return row1["Name"]
+            winner = row1["Name"]
         elif wins2 > wins1:
-            return row2["Name"]
+            winner = row2["Name"]
         else:
-            return "Draw"
+            winner = "Draw"
+
+        return {
+            "Player 1": row1["Name"],
+            "Player 2": row2["Name"],
+            "Allocations": f"{row1['Base1']}-{row1['Base2']}-{row1['Base3']} vs {row2['Base1']}-{row2['Base2']}-{row2['Base3']}",
+            "Base Results": results,
+            "Winner": winner
+        }
 
     results = []
+    win_count = {}
+
     for i in range(len(submissions)):
         for j in range(i + 1, len(submissions)):
-            p1 = submissions.iloc[i]
-            p2 = submissions.iloc[j]
-            result = run_matchup(p1, p2)
-            results.append(f"{p1['Name']} vs {p2['Name']} ➜ Winner: {result}")
+            row1 = submissions.iloc[i]
+            row2 = submissions.iloc[j]
+            result = run_matchup(row1, row2)
+            results.append(result)
+
+            # Tally wins
+            if result["Winner"] != "Draw":
+                win_count[result["Winner"]] = win_count.get(result["Winner"], 0) + 1
 
     if results:
-        st.markdown("#### Matchup Results")
+        st.markdown("#### 🧾 Match Results")
         for r in results:
-            st.write(r)
+            st.markdown(f"- **{r['Player 1']}** vs **{r['Player 2']}** ➜ ⚔️ Winner: **{r['Winner']}**")
+            st.caption(f"Allocations: {r['Allocations']} | Base Wins: {r['Base Results']}")
+
+        st.markdown("### 🏅 Final Tally")
+        scores_df = pd.DataFrame(list(win_count.items()), columns=["Player", "Wins"]).sort_values(by="Wins", ascending=False)
+        st.dataframe(scores_df)
+
+        if not scores_df.empty:
+            champion = scores_df.iloc[0]["Player"]
+            st.success(f"👑 **Champion:** {champion}")
     else:
         st.info("Not enough submissions to run matchups.")
 else:
