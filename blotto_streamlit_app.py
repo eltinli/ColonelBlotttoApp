@@ -47,8 +47,13 @@ st.divider()
 st.subheader("🔐 Admin Login")
 admin_pass = st.text_input("Enter admin password to unlock controls", type="password")
 
-if admin_pass == "aim2025":  # Change this to your real password
+if admin_pass == "mysecretpassword":  # Change this to your real password
     st.success("🔓 Admin access granted")
+
+    # Option to clear all submissions
+    if st.button("🗑️ Clear all submissions"):
+        pd.DataFrame(columns=["Name", "Base1", "Base2", "Base3"]).to_csv(data_file, index=False)
+        st.success("✅ All submissions cleared.")
 
     submissions = pd.read_csv(data_file)
     st.markdown("### 🗂️ All Submissions")
