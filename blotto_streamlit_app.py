@@ -47,7 +47,7 @@ st.divider()
 st.subheader("🔐 Admin Login")
 admin_pass = st.text_input("Enter admin password to unlock controls", type="password")
 
-if admin_pass == "mysecretpassword":  # Change this to your real password
+if admin_pass == "aim2025":  # Change this to your real password
     st.success("🔓 Admin access granted")
 
     # Option to clear all submissions
