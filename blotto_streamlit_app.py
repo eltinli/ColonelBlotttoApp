@@ -117,8 +117,14 @@ if admin_pass == "aim2025":  # Change this to your real password
         st.dataframe(scores_df)
 
         if not scores_df.empty:
-            champion = scores_df.iloc[0]["Player"]
-            st.success(f"👑 **Champion:** {champion}")
+            max_wins = scores_df["Wins"].max()
+            champions = scores_df[scores_df["Wins"] == max_wins]["Player"].tolist()
+
+            if len(champions) == 1:
+                st.success(f"👑 **Champion:** {champions[0]}")
+            else:
+                st.success(f"🤝 **Co-Champions:** {', '.join(champions)}")
+
     else:
         st.info("Not enough submissions to run matchups.")
 else:
