@@ -17,7 +17,7 @@ if not os.path.exists(data_file):
 # --- Player Input ---
 name = st.text_input("Enter your name or alias")
 
-st.subheader(" Troop Allocation")
+st.subheader("🔢 Troop Allocation")
 
 b1 = st.number_input("Base 1", min_value=0, max_value=30, step=1, value=10, key="base1")
 b2 = st.number_input("Base 2", min_value=0, max_value=30, step=1, value=10, key="base2")
@@ -39,7 +39,7 @@ else:
             updated_data = pd.concat([old_data, new_row], ignore_index=True)
             updated_data.to_csv(data_file, index=False)
 
-            st.success(" Strategy submitted successfully!")
+            st.success("🎯 Strategy submitted successfully!")
             st.bar_chart([b1, b2, b3])
 
 # --- Admin Controls ---
@@ -116,15 +116,18 @@ if admin_pass == "aim2025":  # Change this to your real password
         scores_df = pd.DataFrame(list(win_count.items()), columns=["Player", "Wins"]).sort_values(by="Wins", ascending=False)
         st.dataframe(scores_df)
 
+        # ✅ Co-Champion Logic
         if not scores_df.empty:
             max_wins = scores_df["Wins"].max()
-            champions = scores_df[scores_df["Wins"] == max_wins]["Player"].tolist()
+            champions_df = scores_df[scores_df["Wins"] == max_wins]
 
-            if len(champions) == 1:
-                st.success(f"👑 **Champion:** {champions[0]}")
+            if len(champions_df) == 1:
+                champion_name = champions_df.iloc[0]["Player"]
+                st.success(f"👑 **Champion:** {champion_name} ({max_wins} wins)")
             else:
-                st.success(f"🤝 **Co-Champions:** {', '.join(champions)}")
-
+                st.success("🤝 **Co-Champions:**")
+                for _, row in champions_df.iterrows():
+                    st.markdown(f"- 👑 **{row['Player']}** with **{row['Wins']} wins**")
     else:
         st.info("Not enough submissions to run matchups.")
 else:
