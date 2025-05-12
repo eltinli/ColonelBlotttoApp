@@ -4,7 +4,7 @@ import os
 
 st.set_page_config(page_title="Colonel Blotto Game", page_icon="🪖")
 
-st.title("🎖️ Colonel Blotto Game")
+st.title("LG's Colonel Blotto Game")
 st.markdown("Allocate exactly **30 troops** across **3 bases**. Highest troop wins a base.")
 
 # --- Submission Handling Setup ---
@@ -17,7 +17,7 @@ if not os.path.exists(data_file):
 # --- Player Input ---
 name = st.text_input("Enter your name or alias")
 
-st.subheader("🔢 Troop Allocation")
+st.subheader(" Troop Allocation")
 
 b1 = st.number_input("Base 1", min_value=0, max_value=30, step=1, value=10, key="base1")
 b2 = st.number_input("Base 2", min_value=0, max_value=30, step=1, value=10, key="base2")
@@ -39,7 +39,7 @@ else:
             updated_data = pd.concat([old_data, new_row], ignore_index=True)
             updated_data.to_csv(data_file, index=False)
 
-            st.success("🎯 Strategy submitted successfully!")
+            st.success(" Strategy submitted successfully!")
             st.bar_chart([b1, b2, b3])
 
 # --- Admin Controls ---
