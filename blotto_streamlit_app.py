@@ -56,6 +56,12 @@ if admin_pass == "aim2025":  # Change this to your real password
         st.success("✅ All submissions cleared.")
 
     submissions = pd.read_csv(data_file)
+
+    # Sanitize and convert data types
+    submissions["Name"] = submissions["Name"].astype(str).str.strip()
+    for col in ["Base1", "Base2", "Base3"]:
+        submissions[col] = pd.to_numeric(submissions[col], errors="coerce").fillna(0).astype(int)
+
     st.markdown("### 🗂️ All Submissions")
     st.dataframe(submissions)
 
@@ -99,12 +105,13 @@ if admin_pass == "aim2025":  # Change this to your real password
         for j in range(i + 1, len(submissions)):
             row1 = submissions.iloc[i]
             row2 = submissions.iloc[j]
+
             result = run_matchup(row1, row2)
             results.append(result)
 
-            # Tally wins
-            if result["Winner"] != "Draw":
-                win_count[result["Winner"]] = win_count.get(result["Winner"], 0) + 1
+            winner = result["Winner"].strip()
+            if winner != "Draw":
+                win_count[winner] = win_count.get(winner, 0) + 1
 
     if results:
         st.markdown("#### 🧾 Match Results")
@@ -116,7 +123,6 @@ if admin_pass == "aim2025":  # Change this to your real password
         scores_df = pd.DataFrame(list(win_count.items()), columns=["Player", "Wins"]).sort_values(by="Wins", ascending=False)
         st.dataframe(scores_df)
 
-        # ✅ Co-Champion Logic
         if not scores_df.empty:
             max_wins = scores_df["Wins"].max()
             champions_df = scores_df[scores_df["Wins"] == max_wins]
